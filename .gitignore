@@ -1,5 +1,51 @@
-﻿.venv/
+﻿# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Streamlit
 .streamlit/secrets.toml
-.env
+
+# Backup files
+*_backup.py
+*_before_*.py
+app_backup.py
+nul
+
+# Database (optional - uncomment if you don't want to track database)
+# data/fraud_detection.db
+
+# Model files
+*.pt
+*.pth
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

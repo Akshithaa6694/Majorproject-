@@ -71,9 +71,22 @@ def show_incoming_money():
         unsafe_allow_html=True
     )
 
+    # Display current account balance
+    st.markdown(
+        f"""
+        <div class="sender-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+            <h3 style="margin: 0; color: white;">💰 Current Account Balance</h3>
+            <p style="margin: 5px 0 0; font-size: 28px; font-weight: bold; color: white;">
+                ₹{st.session_state.get('account_balance', 10000.0):,.2f}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     fraud_transactions = [
         {
-            "amount": 1200.00,
+            "amount": 200.00,
             "sender_name": "Arjun Reddy",
             "sender_account": "XXXX XXXX 4521",
             "sender_bank": "HDFC Bank",
@@ -81,7 +94,7 @@ def show_incoming_money():
             "sender_location": "Hyderabad, India"
         },
         {
-            "amount": 1500.00,
+            "amount": 350.00,
             "sender_name": "Sneha Sharma",
             "sender_account": "XXXX XXXX 6732",
             "sender_bank": "ICICI Bank",
@@ -89,7 +102,7 @@ def show_incoming_money():
             "sender_location": "Bengaluru, India"
         },
         {
-            "amount": 1800.00,
+            "amount": 500.00,
             "sender_name": "Rahul Verma",
             "sender_account": "XXXX XXXX 2845",
             "sender_bank": "SBI",
@@ -97,7 +110,7 @@ def show_incoming_money():
             "sender_location": "Chennai, India"
         },
         {
-            "amount": 2100.00,
+            "amount": 750.00,
             "sender_name": "Priya Nair",
             "sender_account": "XXXX XXXX 9156",
             "sender_bank": "Axis Bank",
@@ -105,7 +118,7 @@ def show_incoming_money():
             "sender_location": "Mumbai, India"
         },
         {
-            "amount": 2500.00,
+            "amount": 1000.00,
             "sender_name": "Kiran Kumar",
             "sender_account": "XXXX XXXX 3468",
             "sender_bank": "Kotak Bank",
@@ -223,6 +236,19 @@ def show_incoming_money():
             before taking any action.
             """
         )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("✅ Accept Money (Safe)", type="primary", width='stretch'):
+                st.session_state.account_balance = st.session_state.get('account_balance', 500000.0) + amount
+                st.success(f"₹{amount:,.2f} has been added to your account!")
+                st.rerun()
+
+        with col2:
+            if st.button("🚫 Reject Money (Suspicious)", width='stretch'):
+                st.warning(f"Transaction {transaction_id} has been rejected. Money was not added to your account.")
+                st.rerun()
 
         st.markdown("## 📋 Transaction Information")
 

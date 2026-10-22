@@ -9,6 +9,13 @@ import streamlit as st
 
 from fraudguard_ai import show_fraudguard_ai
 from incoming_money import show_incoming_money
+from gnn_model import FraudGNN, create_sample_transactions
+from bank_complaint import show_bank_complaint
+from investigation_system import (
+    show_report_suspicious_transaction,
+    show_track_my_case,
+    show_manager_dashboard
+)
 
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
@@ -318,15 +325,15 @@ def make_demo_dataset(n=7000, seed=42):
             np.round(
                 np.exp(
                     rng.normal(
-                        np.log(3500),
-                        1.0
+                        np.log(500),
+                        0.8
                     )
                 ),
                 2
             )
         )
 
-        amount = min(amount, 150000)
+        amount = min(amount, 10000)
 
         hour = int(rng.integers(0, 24))
 
@@ -397,14 +404,14 @@ def make_demo_dataset(n=7000, seed=42):
 
         score = -5.0
 
-        score += 1.7 * (amount > 20000)
-        score += 1.1 * (amount > 50000)
+        score += 1.7 * (amount > 1000)
+        score += 1.1 * (amount > 3000)
         score += 1.7 * (
             hour <= 5 or hour >= 23
         )
         score += 1.8 * international
         score += 1.6 * new_device
-        score += 0.9 * (distance > 300)
+        score += 0.9 * (distance > 50)
         score += 1.2 * (
             merchant in [
                 "Gaming",
@@ -412,7 +419,7 @@ def make_demo_dataset(n=7000, seed=42):
             ]
         )
         score += 0.7 * (
-            channel == "ATM" and amount > 15000
+            channel == "ATM" and amount > 500
         )
 
         score += float(
@@ -754,7 +761,7 @@ def explain(tx, username):
             "International transaction detected."
         )
 
-    if tx["amount"] >= 20000:
+    if tx["amount"] >= 1000:
 
         reasons.append(
             "Transaction amount is unusually high for the demo profile."
@@ -769,7 +776,7 @@ def explain(tx, username):
             "Transaction occurred at an unusual late-night/early-morning time."
         )
 
-    if tx["distance_km"] > 300:
+    if tx["distance_km"] > 50:
 
         reasons.append(
             "Transaction location is far from recent activity."
@@ -808,7 +815,7 @@ def risk_from_model(pipe, tx):
 
     signal += (
         20
-        if tx["amount"] >= 20000
+        if tx["amount"] >= 1000
         else 0
     )
 
@@ -835,7 +842,7 @@ def risk_from_model(pipe, tx):
 
     signal += (
         10
-        if tx["distance_km"] > 300
+        if tx["distance_km"] > 50
         else 0
     )
 
@@ -880,6 +887,10 @@ if "last_result" not in st.session_state:
 
     st.session_state.last_result = None
 
+if "account_balance" not in st.session_state:
+
+    st.session_state.account_balance = 10000.0
+
 
 # ============================================================
 # SIDEBAR
@@ -916,6 +927,11 @@ with st.sidebar:
             "Transactions",
             "Incoming Money",
             "Analysis",
+            "GNN Analysis",
+            "Bank Fraud Complaint",
+            "Report Suspicious Transaction",
+            "Track My Fraud Case",
+            "Manager Dashboard",
             "Profile"
         ]
         if st.session_state.logged_in
@@ -943,7 +959,7 @@ with st.sidebar:
         st.session_state.logged_in
         and st.button(
             "Logout",
-            use_container_width=True
+            width='stretch'
         )
     ):
 
@@ -995,6 +1011,19 @@ if st.session_state.page == "Home":
         "Random Forest"
     )
 
+    if st.session_state.logged_in:
+        st.markdown(
+            f"""
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h3 style="margin: 0; color: white;">💰 Account Balance</h3>
+                <p style="margin: 5px 0 0; font-size: 28px; font-weight: bold; color: white;">
+                    ₹{st.session_state.account_balance:,.2f}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
 
 # ============================================================
 # LOGIN
@@ -1002,155 +1031,100 @@ if st.session_state.page == "Home":
 
 elif st.session_state.page == "Login":
 
-    import base64
-    from pathlib import Path
-
-    bg_path = Path(__file__).resolve().parent / "assets" / "login_background.png"
-
-    with open(bg_path, "rb") as bg_file:
-        bg64 = base64.b64encode(bg_file.read()).decode("utf-8")
-
     st.markdown(
-        f"""
+        """
         <style>
-
-        section[data-testid="stSidebar"] {{
+        section[data-testid="stSidebar"] {
             display:none !important;
-        }}
+        }
 
-        .stApp {{
-            background-image:url("data:image/png;base64,{bg64}") !important;
-            background-size:cover !important;
-            background-position:center !important;
-            background-repeat:no-repeat !important;
-            background-attachment:fixed !important;
-        }}
+        .login-container {
+            max-width: 450px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
 
-        .block-container {{
-            max-width:100% !important;
-            padding:0 !important;
-            margin:0 !important;
-        }}
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-        header {{
-            background:transparent !important;
-        }}
+        .login-title h1 {
+            color: #073b78;
+            font-size: 32px;
+            margin: 0;
+        }
 
-        footer {{
-            visibility:hidden !important;
-        }}
+        .login-title p {
+            color: #666;
+            margin: 10px 0 0;
+        }
 
-        /* REAL USERNAME INPUT - TRANSPARENT OVER IMAGE BOX */
-        div[data-testid="stTextInput"]:not(:has(input[type="password"])) {{
-            position:fixed !important;
-            left:59% !important;
-            top:51.5% !important;
-            width:33% !important;
-            height:48px !important;
-            z-index:9999 !important;
-            padding:0 !important;
-            margin:0 !important;
-        }}
+        div[data-testid="stTextInput"] input {
+            background: #f8f9fa !important;
+            border: 2px solid #e9ecef !important;
+            border-radius: 10px !important;
+            padding: 12px 16px !important;
+            font-size: 16px !important;
+        }
 
-        /* REAL PASSWORD INPUT - TRANSPARENT OVER IMAGE BOX */
-        div[data-testid="stTextInput"]:has(input[type="password"]) {{
-            position:fixed !important;
-            left:59% !important;
-            top:59.5% !important;
-            width:33% !important;
-            height:48px !important;
-            z-index:9999 !important;
-            padding:0 !important;
-            margin:0 !important;
-        }}
+        div[data-testid="stTextInput"] input:focus {
+            border-color: #087be0 !important;
+            box-shadow: 0 0 0 3px rgba(8,123,224,0.1) !important;
+        }
 
-        div[data-testid="stTextInput"] label {{
-            display:none !important;
-        }}
+        div[data-testid="stTextInput"] label {
+            color: #073b78 !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+        }
 
-        div[data-testid="stTextInput"] input {{
-            width:100% !important;
-            height:48px !important;
-            background:transparent !important;
-            border:2px solid transparent !important;
-            border-radius:10px !important;
-            color:#173b70 !important;
-            font-size:16px !important;
-            padding:0 18px !important;
-            box-shadow:none !important;
-        }}
+        div.stButton > button {
+            width: 100% !important;
+            height: 50px !important;
+            border-radius: 10px !important;
+            border: none !important;
+            background: linear-gradient(90deg, #0878ed, #08b8ed) !important;
+            color: white !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            margin-top: 20px !important;
+        }
 
-        div[data-testid="stTextInput"] input::placeholder {{
-            color:transparent !important;
-        }}
-
-        div[data-testid="stTextInput"] input:focus {{
-            background:rgba(255,255,255,0.04) !important;
-            border:2px solid rgba(20,145,225,0.35) !important;
-            box-shadow:0 0 8px rgba(20,145,225,0.18) !important;
-        }}
-
-        /* REAL LOGIN BUTTON - TRANSPARENT OVER IMAGE BUTTON */
-        div.stButton {{
-            position:fixed !important;
-            left:59% !important;
-            top:68.2% !important;
-            width:33% !important;
-            height:52px !important;
-            z-index:9999 !important;
-            padding:0 !important;
-            margin:0 !important;
-        }}
-
-        div.stButton > button {{
-            width:100% !important;
-            height:52px !important;
-            background:transparent !important;
-            border:none !important;
-            color:transparent !important;
-            box-shadow:none !important;
-            cursor:pointer !important;
-        }}
-
-        div.stButton > button:hover {{
-            background:rgba(255,255,255,0.03) !important;
-            border:none !important;
-            color:transparent !important;
-        }}
-
+        div.stButton > button:hover {
+            background: linear-gradient(90deg, #0565d8, #00a8df) !important;
+        }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    user = st.text_input(
-        "Username",
-        placeholder=""
+    st.markdown(
+        """
+        <div class="login-container">
+            <div class="login-title">
+                <h1>🛡️ Financial Fraud Detection</h1>
+                <p>Secure Login System</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-    pw = st.text_input(
-        "Password",
-        type="password",
-        placeholder=""
-    )
+    user = st.text_input("Username", placeholder="Enter your username")
+    pw = st.text_input("Password", type="password", placeholder="Enter your password")
 
-    if st.button(
-        "Login Securely",
-        type="primary"
-    ):
-
+    if st.button("Login", type="primary", width='stretch'):
         if user.strip() and pw.strip():
-
             st.session_state.logged_in = True
             st.session_state.username = user.strip()
             st.session_state.page = "Bank Details"
             st.rerun()
-
         else:
-
-            st.error(
-                "Please enter both username and password."
-            )
+            st.error("Please enter both username and password.")
 
 # ============================================================
 # BANK DETAILS
@@ -1205,11 +1179,19 @@ elif st.session_state.page == "Bank Details":
             )
         )
 
+    balance = st.number_input(
+        "Account Balance (₹)",
+        min_value=0.0,
+        value=10000.0,
+        step=500.0
+    )
+
     if st.button(
         "Save & Continue",
         type="primary"
     ):
 
+        st.session_state.account_balance = balance
         st.session_state.page = "Transactions"
 
         st.rerun()
@@ -1237,6 +1219,21 @@ elif st.session_state.page in [
         unsafe_allow_html=True
     )
 
+    # Display account balance
+    st.markdown(
+        f"""
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h3 style="margin: 0; color: white;">💰 Account Balance</h3>
+            <p style="margin: 5px 0 0; font-size: 28px; font-weight: bold; color: white;">
+                ₹{st.session_state.account_balance:,.2f}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
     c1, c2, c3 = st.columns(3)
 
     with c1:
@@ -1244,8 +1241,8 @@ elif st.session_state.page in [
         amount = st.number_input(
             "Amount (₹)",
             min_value=1.0,
-            value=85000.0,
-            step=500.0
+            value=500.0,
+            step=50.0
         )
 
         city = st.selectbox(
@@ -1309,8 +1306,8 @@ elif st.session_state.page in [
         distance = st.number_input(
             "Distance from usual location (km)",
             min_value=0.0,
-            value=850.0,
-            step=10.0
+            value=20.0,
+            step=5.0
         )
 
         st.caption(
@@ -1339,7 +1336,7 @@ elif st.session_state.page in [
     if st.button(
         "🔎 Analyze Transaction",
         type="primary",
-        use_container_width=True
+        width='stretch'
     ):
 
         score = risk_from_model(
@@ -1370,6 +1367,9 @@ elif st.session_state.page in [
             reasons
         )
 
+        # Update account balance (deduct transaction amount)
+        st.session_state.account_balance -= amount
+
         st.session_state.last_result = {
             "score": score,
             "status": status,
@@ -1389,7 +1389,7 @@ elif st.session_state.page in [
 
     if st.button(
         "⚡ Simulate Incoming Transaction",
-        use_container_width=True
+        width='stretch'
     ):
 
         city, country = CITIES[
@@ -1405,8 +1405,8 @@ elif st.session_state.page in [
                 np.round(
                     np.exp(
                         np.random.normal(
-                            np.log(12000),
-                            1.2
+                            np.log(500),
+                            0.5
                         )
                     ),
                     2
@@ -1450,7 +1450,7 @@ elif st.session_state.page in [
                 np.round(
                     np.random.gamma(
                         2,
-                        120
+                        15
                     ),
                     1
                 )
@@ -1484,6 +1484,9 @@ elif st.session_state.page in [
             status,
             reasons
         )
+
+        # Update account balance (deduct transaction amount)
+        st.session_state.account_balance -= tx["amount"]
 
         st.session_state.last_result = {
             "score": score,
@@ -1535,6 +1538,22 @@ elif st.session_state.page in [
                 <p>
                     Risk Score:
                     <b>{r["score"]}%</b>
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Display updated account balance
+        st.markdown(
+            f"""
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h3 style="margin: 0; color: white;">💰 Updated Account Balance</h3>
+                <p style="margin: 5px 0 0; font-size: 28px; font-weight: bold; color: white;">
+                    ₹{st.session_state.account_balance:,.2f}
+                </p>
+                <p style="margin: 5px 0 0; font-size: 14px; color: white;">
+                    Transaction amount: ₹{r['tx']['amount']:,.2f} deducted
                 </p>
             </div>
             """,
@@ -1635,7 +1654,7 @@ elif st.session_state.page in [
 
             if x1.button(
                 "🚨 Report as Fraud",
-                use_container_width=True
+                width='stretch'
             ):
 
                 con = db()
@@ -1666,7 +1685,7 @@ elif st.session_state.page in [
 
             if x2.button(
                 "✅ Mark as Safe",
-                use_container_width=True
+                width='stretch'
             ):
 
                 con = db()
@@ -1768,6 +1787,42 @@ elif st.session_state.page == "Incoming Money":
 
 
 # ============================================================
+# BANK FRAUD COMPLAINT
+# ============================================================
+
+elif st.session_state.page == "Bank Fraud Complaint":
+
+    show_bank_complaint()
+
+
+# ============================================================
+# REPORT SUSPICIOUS TRANSACTION
+# ============================================================
+
+elif st.session_state.page == "Report Suspicious Transaction":
+
+    show_report_suspicious_transaction()
+
+
+# ============================================================
+# TRACK MY FRAUD CASE
+# ============================================================
+
+elif st.session_state.page == "Track My Fraud Case":
+
+    show_track_my_case()
+
+
+# ============================================================
+# MANAGER DASHBOARD
+# ============================================================
+
+elif st.session_state.page == "Manager Dashboard":
+
+    show_manager_dashboard()
+
+
+# ============================================================
 # PROFILE
 # ============================================================
 
@@ -1787,8 +1842,92 @@ elif st.session_state.page == "Profile":
         st.session_state.username
     )
 
+    st.markdown(
+        f"""
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h3 style="margin: 0; color: white;">💰 Account Balance</h3>
+            <p style="margin: 5px 0 0; font-size: 28px; font-weight: bold; color: white;">
+                ₹{st.session_state.account_balance:,.2f}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 # ============================================================
+# ============================================================
+# GNN ANALYSIS - EXPERIMENTAL MODEL COMPARISON
+# ============================================================
+
+elif st.session_state.page == "GNN Analysis":
+
+    st.markdown("## 🧠 Graph Neural Network Analysis")
+    st.info(
+        "Experimental offline evaluation on synthetic transaction data. "
+        "These metrics do not represent live transaction predictions."
+    )
+
+    st.markdown("### 📊 Model Performance Comparison")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### Random Forest")
+        st.metric("Test Precision", "15.22%")
+        st.metric("Test Recall", "19.44%")
+        st.metric("Average Precision", "0.1001")
+        st.metric("Fraud Detected", "7 / 36")
+
+    with col2:
+        st.markdown("#### Experimental GNN")
+        st.metric("Test Precision", "18.57%")
+        st.metric("Test Recall", "36.11%")
+        st.metric("Average Precision", "0.1392")
+        st.metric("Fraud Detected", "13 / 36")
+
+    st.markdown("### 🔎 Confusion Matrix")
+    st.caption(
+        "Rows are actual classes; columns are predicted classes. "
+        "Class 0 = non-fraud, class 1 = fraud."
+    )
+
+    cm_col1, cm_col2 = st.columns(2)
+
+    with cm_col1:
+        st.markdown("**Random Forest**")
+        st.dataframe(
+            pd.DataFrame(
+                [[975, 39], [29, 7]],
+                index=["Actual non-fraud", "Actual fraud"],
+                columns=["Predicted non-fraud", "Predicted fraud"]
+            ),
+            width="stretch"
+        )
+
+    with cm_col2:
+        st.markdown("**Experimental GNN**")
+        st.dataframe(
+            pd.DataFrame(
+                [[957, 57], [23, 13]],
+                index=["Actual non-fraud", "Actual fraud"],
+                columns=["Predicted non-fraud", "Predicted fraud"]
+            ),
+            width="stretch"
+        )
+
+    st.markdown("### 📝 Interpretation")
+    st.write(
+        "The experimental GNN detected 13 of 36 fraud cases, "
+        "while Random Forest detected 7 of 36. The GNN also "
+        "generated 57 false alerts, compared with 39 for "
+        "Random Forest. Further testing is required."
+    )
+
+    st.warning(
+        "These are recorded experimental metrics, not live "
+        "GNN predictions or production validation."
+    )
+
 # TRANSACTION HISTORY
 # ============================================================
 
@@ -1833,7 +1972,7 @@ if (
 
         st.dataframe(
             h,
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
 
@@ -1854,6 +1993,7 @@ st.caption(
     "College demo environment • Uses synthetic transaction data "
     "• Not connected to any real bank or payment network"
 )
+
 
 
 
