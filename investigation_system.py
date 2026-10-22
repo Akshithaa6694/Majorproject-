@@ -669,8 +669,9 @@ def show_manager_dashboard():
                 st.rerun()
             else:
                 st.error("❌ Invalid credentials")
+                st.info("Please check the demo credentials below")
         
-        st.info("Demo credentials: Username: manager, Password: manager123")
+        st.info("🔑 **Demo Credentials:**\n- Username: `manager`\n- Password: `manager123`")
         return
     
     st.markdown("""
@@ -843,6 +844,10 @@ def show_manager_dashboard():
         
         if complaints_df.empty:
             st.info("No complaints submitted yet.")
+            st.markdown("---")
+            st.markdown("### 📊 How to Submit Complaints")
+            st.write("Users can submit complaints through the 'Bank Fraud Complaint' page in the main application.")
+            st.write("Once submitted, complaints will appear here for manager review.")
         else:
             # Complaint count and status summary
             col1, col2, col3, col4, col5 = st.columns(5)
@@ -851,6 +856,19 @@ def show_manager_dashboard():
             col3.metric("Under Review", len(complaints_df[complaints_df['status'] == 'Under Review']))
             col4.metric("Resolved", len(complaints_df[complaints_df['status'] == 'Resolved']))
             col5.metric("Escalated", len(complaints_df[complaints_df['status'] == 'Escalated']))
+            
+            st.markdown("---")
+            st.markdown("### 👥 Complaints by User")
+            
+            # Show unique users who raised complaints
+            if 'username' in complaints_df.columns:
+                unique_users = complaints_df['username'].unique()
+                st.write(f"**Total Users Who Raised Complaints:** {len(unique_users)}")
+                st.write(f"**Usernames:** {', '.join(unique_users)}")
+            
+            if 'account_holder_name' in complaints_df.columns:
+                unique_customers = complaints_df['account_holder_name'].unique()
+                st.write(f"**Customer Names:** {', '.join(unique_customers)}")
             
             st.markdown("---")
             
@@ -911,6 +929,7 @@ def show_manager_dashboard():
                         st.write(f"**Username:** {complaint['username']}")
                         masked_account = complaint['account_number'][:4] + 'XXXX' + complaint['account_number'][-4:] if len(complaint['account_number']) > 8 else 'XXXX'
                         st.write(f"**Account Number:** {masked_account}")
+                        st.write(f"**Complaint Raised By:** {complaint['username']} ({complaint['account_holder_name']})")
                     
                     st.markdown("---")
                     st.markdown("### 💳 Transaction Information")
