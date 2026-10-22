@@ -254,7 +254,7 @@ def show_bank_complaint():
     # Submit button
     st.markdown("---")
     
-    if st.button("📨 Submit Complaint to Bank Manager", type="primary", width='stretch'):
+    if st.button("📨 Submit Complaint to Bank Manager", type="primary"):
         # Validation
         if not all([account_holder, account_number, amount > 0, from_location, to_location, transaction_id, bank_manager]):
             st.error("❌ Please fill in all required fields marked with *")

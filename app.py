@@ -959,7 +959,7 @@ with st.sidebar:
         st.session_state.logged_in
         and st.button(
             "Logout",
-            width='stretch'
+
         )
     ):
 
@@ -1117,7 +1117,7 @@ elif st.session_state.page == "Login":
     user = st.text_input("Username", placeholder="Enter your username")
     pw = st.text_input("Password", type="password", placeholder="Enter your password")
 
-    if st.button("Login", type="primary", width='stretch'):
+    if st.button("Login", type="primary"):
         if user.strip() and pw.strip():
             st.session_state.logged_in = True
             st.session_state.username = user.strip()
@@ -1654,7 +1654,7 @@ elif st.session_state.page in [
 
             if x1.button(
                 "🚨 Report as Fraud",
-                width='stretch'
+    
             ):
 
                 con = db()
@@ -1685,7 +1685,7 @@ elif st.session_state.page in [
 
             if x2.button(
                 "✅ Mark as Safe",
-                width='stretch'
+    
             ):
 
                 con = db()
@@ -1972,7 +1972,6 @@ if (
 
         st.dataframe(
             h,
-            width='stretch',
             hide_index=True
         )
 

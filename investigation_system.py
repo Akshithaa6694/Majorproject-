@@ -493,7 +493,7 @@ def show_report_suspicious_transaction():
     
     st.markdown("---")
     
-    if st.button("📨 Submit Report & Request Account Restriction", type="primary", width='stretch'):
+    if st.button("📨 Submit Report & Request Account Restriction", type="primary"):
         # Validation
         if not all([reporter_account, transaction_id, transaction_amount > 0, 
                    sender_location, receiver_location]):
@@ -661,7 +661,7 @@ def show_manager_dashboard():
         username = st.text_input("Manager Username")
         password = st.text_input("Password", type="password")
         
-        if st.button("Login", type="primary", width='stretch'):
+        if st.button("Login", type="primary"):
             if verify_manager(username, password):
                 st.session_state.manager_logged_in = True
                 st.session_state.manager_username = username
@@ -805,7 +805,7 @@ def show_manager_dashboard():
                 
                 decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...")
                 
-                if st.button("Submit Decision", type="primary", width='stretch'):
+                if st.button("Submit Decision", type="primary", ):
                     if not decision_reason:
                         st.error("❌ Please provide a reason for your decision.")
                         return
@@ -951,7 +951,7 @@ def show_manager_dashboard():
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("Submit Action", type="primary", width='stretch'):
+                        if st.button("Submit Action", type="primary", ):
                             if not decision_reason:
                                 st.error("❌ Please provide a reason for your decision.")
                                 return
@@ -973,7 +973,7 @@ def show_manager_dashboard():
                                 st.error("❌ Failed to update complaint. Please try again.")
                     
                     with col2:
-                        if st.button("View Complaint Audit Log", type="secondary", width='stretch'):
+                        if st.button("View Complaint Audit Log", type="secondary", ):
                             audit_log = get_case_audit_log(selected_complaint)
                             
                             if audit_log is None or audit_log.empty:
@@ -1134,7 +1134,7 @@ def show_manager_dashboard():
         
         decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...")
         
-        if st.button("Submit Decision", type="primary", width='stretch'):
+        if st.button("Submit Decision", type="primary", ):
             if not decision_reason:
                 st.error("❌ Please provide a reason for your decision.")
                 return

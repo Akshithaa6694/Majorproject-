@@ -240,13 +240,13 @@ def show_incoming_money():
         col1, col2 = st.columns(2)
 
         with col1:
-            if st.button("✅ Accept Money (Safe)", type="primary", width='stretch'):
+            if st.button("✅ Accept Money (Safe)", type="primary"):
                 st.session_state.account_balance = st.session_state.get('account_balance', 500000.0) + amount
                 st.success(f"₹{amount:,.2f} has been added to your account!")
                 st.rerun()
 
         with col2:
-            if st.button("🚫 Reject Money (Suspicious)", width='stretch'):
+            if st.button("🚫 Reject Money (Suspicious)"):
                 st.warning(f"Transaction {transaction_id} has been rejected. Money was not added to your account.")
                 st.rerun()
 
