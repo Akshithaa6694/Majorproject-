@@ -1335,8 +1335,7 @@ elif st.session_state.page in [
 
     if st.button(
         "🔎 Analyze Transaction",
-        type="primary",
-        width='stretch'
+        type="primary"
     ):
 
         score = risk_from_model(
@@ -1388,8 +1387,7 @@ elif st.session_state.page in [
     # ========================================================
 
     if st.button(
-        "⚡ Simulate Incoming Transaction",
-        width='stretch'
+        "⚡ Simulate Incoming Transaction"
     ):
 
         city, country = CITIES[
@@ -1900,8 +1898,7 @@ elif st.session_state.page == "GNN Analysis":
                 [[975, 39], [29, 7]],
                 index=["Actual non-fraud", "Actual fraud"],
                 columns=["Predicted non-fraud", "Predicted fraud"]
-            ),
-            width="stretch"
+            )
         )
 
     with cm_col2:
@@ -1911,8 +1908,7 @@ elif st.session_state.page == "GNN Analysis":
                 [[957, 57], [23, 13]],
                 index=["Actual non-fraud", "Actual fraud"],
                 columns=["Predicted non-fraud", "Predicted fraud"]
-            ),
-            width="stretch"
+            )
         )
 
     st.markdown("### 📝 Interpretation")
