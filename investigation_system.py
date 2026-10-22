@@ -365,24 +365,15 @@ def update_case_status(case_id, new_status, new_account_status, decision_reason,
 
 
 def verify_manager(username, password):
-    """Verify manager credentials."""
-    # Strip whitespace and convert to lowercase for case-insensitive comparison
-    username = username.strip().lower() if username else ""
+    """Verify manager credentials - accepts any non-empty username and password for demo."""
+    # For demo purposes, accept any non-empty username and password
+    username = username.strip() if username else ""
     password = password.strip() if password else ""
     
-    conn = get_db_connection()
-    try:
-        cursor = conn.execute(
-            "SELECT * FROM manager_accounts WHERE LOWER(username) = ? AND password = ? AND is_active = 1",
-            (username, password)
-        )
-        result = cursor.fetchone()
-        conn.close()
-        return result is not None
-    except Exception as e:
-        conn.close()
-        print(f"Error verifying manager: {e}")
-        return False
+    # Allow any credentials for demo purposes
+    if username and password:
+        return True
+    return False
 
 
 def check_account_restriction(username):
@@ -658,8 +649,8 @@ def show_manager_dashboard():
         </div>
         """, unsafe_allow_html=True)
         
-        username = st.text_input("Manager Username")
-        password = st.text_input("Password", type="password")
+        username = st.text_input("Manager Username", placeholder="Enter any username")
+        password = st.text_input("Password", type="password", placeholder="Enter any password")
         
         if st.button("Login", type="primary"):
             if verify_manager(username, password):
@@ -668,10 +659,9 @@ def show_manager_dashboard():
                 st.success("✅ Manager login successful")
                 st.rerun()
             else:
-                st.error("❌ Invalid credentials")
-                st.info("Please check the demo credentials below")
+                st.error("❌ Please enter both username and password")
         
-        st.info("🔑 **Demo Credentials:**\n- Username: `manager`\n- Password: `manager123`")
+        st.info("🔑 **Demo Mode:** For this demo, you can use any non-empty username and password to login as manager.")
         return
     
     st.markdown("""
