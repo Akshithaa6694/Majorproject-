@@ -16,6 +16,14 @@ from investigation_system import (
     show_track_my_case,
     show_manager_dashboard
 )
+from auth_system import (
+    create_users_table,
+    validate_email,
+    validate_password,
+    create_user,
+    authenticate_user,
+    show_password_requirements
+)
 
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
@@ -1031,6 +1039,13 @@ if st.session_state.page == "Home":
 
 elif st.session_state.page == "Login":
 
+    # Initialize users table
+    create_users_table()
+
+    # Toggle between Login and Create Account
+    if "auth_mode" not in st.session_state:
+        st.session_state.auth_mode = "login"
+
     st.markdown(
         """
         <style>
@@ -1097,6 +1112,28 @@ elif st.session_state.page == "Login":
         div.stButton > button:hover {
             background: linear-gradient(90deg, #0565d8, #00a8df) !important;
         }
+
+        .auth-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .auth-toggle button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            background: white;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .auth-toggle button.active {
+            background: linear-gradient(90deg, #0878ed, #08b8ed);
+            color: white;
+            border-color: #0878ed;
+        }
         </style>
         """,
         unsafe_allow_html=True
@@ -1114,17 +1151,116 @@ elif st.session_state.page == "Login":
         unsafe_allow_html=True
     )
 
-    user = st.text_input("Username", placeholder="Enter your username")
-    pw = st.text_input("Password", type="password", placeholder="Enter your password")
-
-    if st.button("Login", type="primary"):
-        if user.strip() and pw.strip():
-            st.session_state.logged_in = True
-            st.session_state.username = user.strip()
-            st.session_state.page = "Bank Details"
+    # Toggle buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Login", type="primary" if st.session_state.auth_mode == "login" else "secondary", key="toggle_login"):
+            st.session_state.auth_mode = "login"
             st.rerun()
-        else:
-            st.error("Please enter both username and password.")
+    with col2:
+        if st.button("Create Account", type="primary" if st.session_state.auth_mode == "register" else "secondary", key="toggle_register"):
+            st.session_state.auth_mode = "register"
+            st.rerun()
+
+    st.markdown("---")
+
+    if st.session_state.auth_mode == "login":
+        # Login Form
+        st.markdown("### 🔐 Login")
+        
+        user = st.text_input("Username", placeholder="Enter your username", key="login_username")
+        pw = st.text_input("Password", type="password", placeholder="Enter your password", key="login_password")
+
+        if st.button("Login", type="primary", key="login_button"):
+            if user.strip() and pw.strip():
+                success, user_data, message = authenticate_user(user.strip(), pw.strip())
+                
+                if success:
+                    st.session_state.logged_in = True
+                    st.session_state.username = user_data['username']
+                    st.session_state.full_name = user_data['full_name']
+                    st.session_state.email = user_data['email']
+                    st.session_state.page = "Bank Details"
+                    st.success(f"✅ Welcome back, {user_data['full_name']}!")
+                    st.rerun()
+                else:
+                    st.error(f"❌ {message}")
+            else:
+                st.error("Please enter both username and password.")
+        
+        st.info("💡 Don't have an account? Click 'Create Account' above to register.")
+
+    else:
+        # Create Account Form
+        st.markdown("### 📝 Create Account")
+        
+        full_name = st.text_input("Full Name *", placeholder="Enter your full name", key="register_fullname")
+        email = st.text_input("Email Address *", placeholder="Enter your email", key="register_email")
+        username = st.text_input("Username *", placeholder="Choose a username", key="register_username")
+        password = st.text_input("Password *", type="password", placeholder="Create a strong password", key="register_password")
+        confirm_password = st.text_input("Confirm Password *", type="password", placeholder="Confirm your password", key="register_confirm")
+
+        # Show password requirements
+        show_password_requirements()
+
+        if st.button("Create Account", type="primary", key="register_button"):
+            # Validate all fields
+            errors = []
+            
+            if not full_name.strip():
+                errors.append("Full name is required")
+            
+            # Validate email
+            email_valid, email_msg = validate_email(email.strip())
+            if not email_valid:
+                errors.append(email_msg)
+            
+            if not username.strip():
+                errors.append("Username is required")
+            
+            if not password:
+                errors.append("Password is required")
+            
+            if not confirm_password:
+                errors.append("Please confirm your password")
+            
+            # Validate password strength
+            if password:
+                password_valid, password_errors = validate_password(password)
+                if not password_valid:
+                    errors.extend(password_errors)
+            
+            # Check password match
+            if password and confirm_password and password != confirm_password:
+                errors.append("Passwords do not match")
+            
+            # Display errors
+            if errors:
+                st.error("❌ Please fix the following issues:")
+                for error in errors:
+                    st.write(f"• {error}")
+            else:
+                # Check if email or username already exists
+                if check_email_exists(email.strip()):
+                    st.error("❌ Email already registered. Please use a different email or login.")
+                elif check_username_exists(username.strip()):
+                    st.error("❌ Username already taken. Please choose a different username.")
+                else:
+                    # Create user
+                    success, message = create_user(
+                        username.strip(),
+                        email.strip(),
+                        full_name.strip(),
+                        password
+                    )
+                    
+                    if success:
+                        st.success(f"✅ {message}")
+                        st.info("👉 Your account has been created! Click 'Login' above to sign in with your new credentials.")
+                    else:
+                        st.error(f"❌ {message}")
+        
+        st.info("💡 Already have an account? Click 'Login' above to sign in.")
 
 # ============================================================
 # BANK DETAILS
@@ -1248,13 +1384,15 @@ elif st.session_state.page in [
         city = st.selectbox(
             "Location / City",
             [x[0] for x in CITIES],
-            index=0
+            index=0,
+            key="city"
         )
 
         merchant = st.selectbox(
             "Merchant Name",
             MERCHANTS,
-            index=0
+            index=0,
+            key="merchant"
         )
 
     with c2:
@@ -1286,13 +1424,15 @@ elif st.session_state.page in [
         payment = st.selectbox(
             "Payment Method",
             PAYMENTS,
-            index=0
+            index=0,
+            key="payment"
         )
 
         device = st.selectbox(
             "Device",
             DEVICES,
-            index=1
+            index=1,
+            key="device"
         )
 
     with c3:
