@@ -1241,24 +1241,33 @@ elif st.session_state.page == "Login":
                     st.write(f"• {error}")
             else:
                 # Check if email or username already exists
-                if check_email_exists(email.strip()):
+                email_exists = check_email_exists(email.strip())
+                username_exists = check_username_exists(username.strip())
+                
+                if email_exists:
                     st.error("❌ Email already registered. Please use a different email or login.")
-                elif check_username_exists(username.strip()):
+                elif username_exists:
                     st.error("❌ Username already taken. Please choose a different username.")
                 else:
                     # Create user
-                    success, message = create_user(
-                        username.strip(),
-                        email.strip(),
-                        full_name.strip(),
-                        password
-                    )
-                    
-                    if success:
-                        st.success(f"✅ {message}")
-                        st.info("👉 Your account has been created! Click 'Login' above to sign in with your new credentials.")
-                    else:
-                        st.error(f"❌ {message}")
+                    try:
+                        success, message = create_user(
+                            username.strip(),
+                            email.strip(),
+                            full_name.strip(),
+                            password
+                        )
+                        
+                        if success:
+                            st.success(f"✅ {message}")
+                            st.info("👉 Your account has been created! Click 'Login' above to sign in with your new credentials.")
+                            # Clear form
+                            st.session_state.auth_mode = "login"
+                            st.rerun()
+                        else:
+                            st.error(f"❌ {message}")
+                    except Exception as e:
+                        st.error(f"❌ Error creating account: {str(e)}")
         
         st.info("💡 Already have an account? Click 'Login' above to sign in.")
 

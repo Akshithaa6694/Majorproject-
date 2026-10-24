@@ -47,6 +47,10 @@ def validate_password(password):
     """Validate password strength."""
     errors = []
     
+    if not password:
+        errors.append("Password is required")
+        return False, errors
+    
     if len(password) < 8:
         errors.append("Password must be at least 8 characters")
     
@@ -120,12 +124,14 @@ def create_user(username, email, full_name, password):
         conn.commit()
         return True, "Account created successfully"
     except sqlite3.IntegrityError as e:
-        if "username" in str(e):
+        conn.rollback()
+        error_msg = str(e).lower()
+        if "username" in error_msg:
             return False, "Username already exists"
-        elif "email" in str(e):
+        elif "email" in error_msg:
             return False, "Email already registered"
         else:
-            return False, "Registration failed"
+            return False, f"Registration failed: {str(e)}"
     except Exception as e:
         conn.rollback()
         return False, f"Error: {str(e)}"
