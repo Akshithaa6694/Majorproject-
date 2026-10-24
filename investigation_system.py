@@ -447,23 +447,30 @@ def show_report_suspicious_transaction():
     
     with col1:
         reporter_account = st.text_input("Your Account Number *",
-                                         placeholder="Enter your account number")
+                                         placeholder="Enter your account number",
+                                         key="report_account")
         suspicious_account = st.text_input("Suspicious Account Number (if known)",
-                                          placeholder="Enter the other account number")
+                                          placeholder="Enter the other account number",
+                                          key="suspicious_account")
         transaction_id = st.text_input("Transaction ID *",
-                                       placeholder="Enter transaction reference")
+                                       placeholder="Enter transaction reference",
+                                       key="transaction_id_report")
         transaction_amount = st.number_input("Transaction Amount (₹) *",
                                            min_value=0.0,
                                            value=0.0,
-                                           step=100.0)
+                                           step=100.0,
+                                           key="transaction_amount_report")
     
     with col2:
         transaction_date = st.date_input("Transaction Date *",
-                                        value=datetime.now().date())
+                                        value=datetime.now().date(),
+                                        key="transaction_date_report")
         sender_location = st.text_input("Sender Location *",
-                                        placeholder="Where transaction originated")
+                                        placeholder="Where transaction originated",
+                                        key="sender_location")
         receiver_location = st.text_input("Receiver Location *",
-                                          placeholder="Where money was sent")
+                                          placeholder="Where money was sent",
+                                          key="receiver_location")
     
     reason = st.selectbox(
         "Reason for Reporting *",
@@ -480,7 +487,8 @@ def show_report_suspicious_transaction():
     )
     
     complaint_ref = st.text_input("Complaint Reference Number (if applicable)",
-                                    placeholder="Enter complaint reference from Bank Fraud Complaint page")
+                                    placeholder="Enter complaint reference from Bank Fraud Complaint page",
+                                    key="complaint_ref")
     
     st.markdown("---")
     
@@ -649,8 +657,8 @@ def show_manager_dashboard():
         </div>
         """, unsafe_allow_html=True)
         
-        username = st.text_input("Manager Username", placeholder="Enter any username")
-        password = st.text_input("Password", type="password", placeholder="Enter any password")
+        username = st.text_input("Manager Username", placeholder="Enter any username", key="manager_username")
+        password = st.text_input("Password", type="password", placeholder="Enter any password", key="manager_password")
         
         if st.button("Login", type="primary"):
             if verify_manager(username, password):
@@ -710,11 +718,11 @@ def show_manager_dashboard():
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                search_case_id = st.text_input("Search by Case ID")
+                search_case_id = st.text_input("Search by Case ID", key="search_case_id")
             with col2:
-                search_tx_id = st.text_input("Search by Transaction ID")
+                search_tx_id = st.text_input("Search by Transaction ID", key="search_tx_id_cases")
             with col3:
-                search_account = st.text_input("Search by Account Number")
+                search_account = st.text_input("Search by Account Number", key="search_account")
             
             # Apply filters
             if search_case_id:
@@ -794,7 +802,7 @@ def show_manager_dashboard():
                     ]
                 )
                 
-                decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...")
+                decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...", key="decision_reason_cases")
                 
                 if st.button("Submit Decision", type="primary", ):
                     if not decision_reason:
@@ -867,11 +875,11 @@ def show_manager_dashboard():
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                search_complaint_id = st.text_input("Search by Complaint ID")
+                search_complaint_id = st.text_input("Search by Complaint ID", key="search_complaint_id")
             with col2:
-                search_tx_id = st.text_input("Search by Transaction ID")
+                search_tx_id = st.text_input("Search by Transaction ID", key="search_tx_id_complaints")
             with col3:
-                filter_status = st.selectbox("Filter by Status", ["All", "Pending", "Under Review", "Resolved", "Escalated"])
+                filter_status = st.selectbox("Filter by Status", ["All", "Pending", "Under Review", "Resolved", "Escalated"], key="filter_status")
             
             # Apply filters
             if search_complaint_id:
@@ -956,7 +964,7 @@ def show_manager_dashboard():
                         ]
                     )
                     
-                    decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...")
+                    decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...", key="decision_reason_cases")
                     
                     col1, col2 = st.columns(2)
                     with col1:
@@ -1141,7 +1149,7 @@ def show_manager_dashboard():
             ]
         )
         
-        decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...")
+        decision_reason = st.text_area("Decision Reason (Required)", placeholder="Explain your decision...", key="decision_reason_complaints")
         
         if st.button("Submit Decision", type="primary", ):
             if not decision_reason:
