@@ -22,7 +22,9 @@ from auth_system import (
     validate_password,
     create_user,
     authenticate_user,
-    show_password_requirements
+    show_password_requirements,
+    check_email_exists,
+    check_username_exists
 )
 
 from sklearn.compose import ColumnTransformer
