@@ -823,11 +823,13 @@ def risk_from_model(pipe, tx):
 
     signal = 0
 
-    signal += (
-        20
-        if tx["amount"] >= 1000
-        else 0
-    )
+    # Large amounts trigger high risk
+    if tx["amount"] >= 5000:
+        signal += 50  # Very high risk for large amounts
+    elif tx["amount"] >= 1000:
+        signal += 30  # High risk
+    elif tx["amount"] >= 500:
+        signal += 15  # Medium risk
 
     signal += (
         15
